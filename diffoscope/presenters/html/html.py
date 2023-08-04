@@ -97,11 +97,10 @@ def convert(s, ponct=0, tag=''):
     for c in s:
         # used by diffs
         if c == DIFFON:
-            t.write('<%s>' % tag)
+            t.write(f'<{tag}>')
         elif c == DIFFOFF:
-            t.write('</%s>' % tag)
+            t.write(f'</{tag}>')
 
-        # special highlighted chars
         elif c == "\t" and ponct == 1:
             n = TABSIZE-(i%TABSIZE)
             if n == 0:
@@ -113,7 +112,7 @@ def convert(s, ponct=0, tag=''):
             t.write('<br/><span class="diffponct">\</span>')
         elif ord(c) < 32:
             conv = u"\\x%x" % ord(c)
-            t.write('<em>%s</em>' % conv)
+            t.write(f'<em>{conv}</em>')
             i += len(conv)
         else:
             t.write(html.escape(c))
@@ -142,17 +141,17 @@ def output_line(s1, s2):
     orig2 = s2
 
     if s1 and len(s1) > MAX_LINE_SIZE:
-        s1 = s1[:MAX_LINE_SIZE] + u" ✂"
+        s1 = f"{s1[:MAX_LINE_SIZE]} ✂"
     if s2 and len(s2) > MAX_LINE_SIZE:
-        s2 = s2[:MAX_LINE_SIZE] + u" ✂"
+        s2 = f"{s2[:MAX_LINE_SIZE]} ✂"
 
-    if s1 == None and s2 == None:
+    if s1 is None and s2 is None:
         type_name = "unmodified"
     elif s1 == "" and s2 == "":
         type_name = "unmodified"
-    elif s1 == None or s1 == "":
+    elif s1 is None or s1 == "":
         type_name = "added"
-    elif s2 == None or s2 == "":
+    elif s2 is None or s2 == "":
         type_name = "deleted"
     elif orig1 == orig2 and not s1.endswith('lines removed ]') and not s2.endswith('lines removed ]'):
         type_name = "unmodified"
@@ -160,7 +159,7 @@ def output_line(s1, s2):
         type_name = "changed"
         s1, s2 = linediff(s1, s2, DIFFON, DIFFOFF)
 
-    spl_print_func(u'<tr class="diff%s">' % type_name)
+    spl_print_func(f'<tr class="diff{type_name}">')
     try:
         if s1:
             if has_internal_linenos:
@@ -187,13 +186,11 @@ def output_line(s1, s2):
         spl_print_func(u"</tr>\n", force=True)
         row_was_output()
 
-    m = orig1 and re.match(r"^\[ (\d+) lines removed \]$", orig1)
-    if m:
+    if m := orig1 and re.match(r"^\[ (\d+) lines removed \]$", orig1):
         line1 += int(m.group(1))
     elif orig1:
         line1 += 1
-    m = orig2 and re.match(r"^\[ (\d+) lines removed \]$", orig2)
-    if m:
+    if m := orig2 and re.match(r"^\[ (\d+) lines removed \]$", orig2):
         line2 += int(m.group(1))
     elif orig2:
         line2 += 1
@@ -208,7 +205,7 @@ def empty_buffer():
         for l in buf:
             output_line(l[0], l[1])
 
-    elif del_cpt != 0 and add_cpt != 0:
+    else:
         l0, l1 = [], []
         for l in buf:
             if l[0] != None:
@@ -267,28 +264,25 @@ def row_was_output():
     max_lines_parent = Config().max_diff_block_lines_parent
     max_lines_ratio = Config().max_diff_block_lines_html_dir_ratio
     max_report_child_size = Config().max_report_child_size
-    if not rotation_params:
-        # html-dir single output, don't need to rotate
-        if spl_rows >= max_lines:
-            raise DiffBlockLimitReached()
-        return
-    else:
+    if rotation_params:
         # html-dir output, perhaps need to rotate
         directory, mainname, css_url = rotation_params
         if spl_rows >= max_lines_ratio * max_lines:
             raise DiffBlockLimitReached()
 
-        if spl_current_page == 0: # on parent page
-            if spl_rows < max_lines_parent:
-                return
-        else: # on child page
-            # TODO: make this stay below the max, instead of going 1 row over the max
-            # will require some backtracking...
-            if spl_print_func.bytes_written < max_report_child_size:
-                return
-
+        if (
+            spl_current_page == 0
+            and spl_rows < max_lines_parent
+            or spl_current_page != 0
+            and spl_print_func.bytes_written < max_report_child_size
+        ):
+            return
+    elif spl_rows >= max_lines:
+        raise DiffBlockLimitReached()
+    else:
+        return
     spl_current_page += 1
-    filename = "%s-%s.html" % (mainname, spl_current_page)
+    filename = f"{mainname}-{spl_current_page}.html"
 
     if spl_current_page > 1:
         # previous page was a child, close it
@@ -312,17 +306,14 @@ def output_unified_diff_table(unified_diff, _has_internal_linenos):
         bytes_processed = 0
         for l in unified_diff.splitlines():
             bytes_processed += len(l) + 1
-            m = re.match(r'^--- ([^\s]*)', l)
-            if m:
+            if m := re.match(r'^--- ([^\s]*)', l):
                 empty_buffer()
                 continue
-            m = re.match(r'^\+\+\+ ([^\s]*)', l)
-            if m:
+            if m := re.match(r'^\+\+\+ ([^\s]*)', l):
                 empty_buffer()
                 continue
 
-            m = re.match(r"@@ -(\d+),?(\d*) \+(\d+),?(\d*)", l)
-            if m:
+            if m := re.match(r"@@ -(\d+),?(\d*) \+(\d+),?(\d*)", l):
                 empty_buffer()
                 hunk_data = map(lambda x:x=="" and 1 or int(x), m.groups())
                 hunk_off1, hunk_size1, hunk_off2, hunk_size2 = hunk_data
@@ -345,10 +336,9 @@ def output_unified_diff_table(unified_diff, _has_internal_linenos):
                 empty_buffer()
                 continue
 
-            m = re.match(r"^\+\[ (\d+) lines removed \]$", l)
-            if m:
-                add_cpt += int(m.group(1))
-                hunk_size2 -= int(m.group(1))
+            if m := re.match(r"^\+\[ (\d+) lines removed \]$", l):
+                add_cpt += int(m[1])
+                hunk_size2 -= int(m[1])
                 buf.append((None, l[1:]))
                 continue
 
@@ -358,10 +348,9 @@ def output_unified_diff_table(unified_diff, _has_internal_linenos):
                 buf.append((None, l[1:]))
                 continue
 
-            m = re.match(r"^-\[ (\d+) lines removed \]$", l)
-            if m:
-                del_cpt += int(m.group(1))
-                hunk_size1 -= int(m.group(1))
+            if m := re.match(r"^-\[ (\d+) lines removed \]$", l):
+                del_cpt += int(m[1])
+                hunk_size1 -= int(m[1])
                 buf.append((l[1:], None))
                 continue
 
@@ -420,8 +409,12 @@ def output_unified_diff(print_func, css_url, directory, unified_diff, has_intern
 
     if spl_current_page > 0:
         noun = "pieces" if spl_current_page > 1 else "piece"
-        text = "load diff (%s %s%s)" % (spl_current_page, noun, (", truncated" if truncated else ""))
-        print_func(templates.UD_TABLE_FOOTER % {"filename": html.escape("%s-1.html" % mainname), "text": text}, force=True)
+        text = f'load diff ({spl_current_page} {noun}{", truncated" if truncated else ""})'
+        print_func(
+            templates.UD_TABLE_FOOTER
+            % {"filename": html.escape(f"{mainname}-1.html"), "text": text},
+            force=True,
+        )
 
 def escape_anchor(val):
     """
@@ -446,20 +439,24 @@ def output_difference(difference, print_func, css_url, directory, parents):
         print_func(u'<div class="diffheader">')
         if difference.source1 == difference.source2:
             print_func(u'<div class="diffcontrol">[−]</div>')
-            print_func(u'<div><span class="source">%s</span>'
-                       % html.escape(difference.source1))
+            print_func(
+                f'<div><span class="source">{html.escape(difference.source1)}</span>'
+            )
         else:
             print_func(u'<div class="diffcontrol diffcontrol-double">[−]</div>')
-            print_func(u'<div><span class="source">%s</span> vs.</div>'
-                       % html.escape(difference.source1))
-            print_func(u'<div><span class="source">%s</span>'
-                       % html.escape(difference.source2))
+            print_func(
+                f'<div><span class="source">{html.escape(difference.source1)}</span> vs.</div>'
+            )
+            print_func(
+                f'<div><span class="source">{html.escape(difference.source2)}</span>'
+            )
         anchor = escape_anchor('/'.join(sources[1:]))
         print_func(u' <a class="anchor" href="#%s" name="%s">\xb6</a>' % (anchor, anchor))
         print_func(u"</div>")
         if difference.comments:
-            print_func(u'<div class="comment">%s</div>'
-                       % u'<br />'.join(map(html.escape, difference.comments)))
+            print_func(
+                f"""<div class="comment">{'<br />'.join(map(html.escape, difference.comments))}</div>"""
+            )
         print_func(u"</div>")
         if difference.unified_diff:
             output_unified_diff(print_func, css_url, directory, difference.unified_diff, difference.has_internal_linenos)
@@ -474,7 +471,7 @@ def output_difference(difference, print_func, css_url, directory, parents):
 
 def output_header(css_url, print_func):
     if css_url:
-        css_link = '<link href="%s" type="text/css" rel="stylesheet" />' % css_url
+        css_link = f'<link href="{css_url}" type="text/css" rel="stylesheet" />'
     else:
         css_link = ''
     print_func(templates.HEADER % {'title': html.escape(' '.join(sys.argv)),
@@ -520,7 +517,7 @@ def output_html_directory(directory, difference, css_url=None, jquery_url=None):
         os.makedirs(directory)
 
     if not os.path.isdir(directory):
-        raise ValueError("%s is not a directory" % directory)
+        raise ValueError(f"{directory} is not a directory")
 
     if not jquery_url:
         jquery_symlink = os.path.join(directory, "jquery.js")

@@ -49,13 +49,13 @@ def test_non_existing_left_with_new_file(capsys):
 
     assert ret == 1
     assert '--- /nonexisting1' in out
-    assert ('+++ %s' % __file__) in out
+    assert f'+++ {__file__}' in out
 
 def test_non_existing_right_with_new_file(capsys):
     ret, out, _ = run(capsys, '--new-file', __file__, '/nonexisting2')
 
     assert ret == 1
-    assert ('--- %s' % __file__) in out
+    assert f'--- {__file__}' in out
     assert '+++ /nonexisting2' in out
 
 def test_non_existing_files_with_new_file(capsys):

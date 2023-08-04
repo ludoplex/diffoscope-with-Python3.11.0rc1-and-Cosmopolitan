@@ -124,10 +124,14 @@ def test_with_compare_details_and_no_actual_differences():
 @skip_unless_tools_exist('xxd')
 def test_with_compare_details_and_failed_process():
     output = 'Free Jeremy Hammond'
+
+
     class MockFile(FilesystemFile):
         def compare_details(self, other, source=None):
-            subprocess.check_output(['sh', '-c', 'echo "%s"; exit 42' % output], shell=False)
+            subprocess.check_output(['sh', '-c', f'echo "{output}"; exit 42'], shell=False)
             raise Exception('should not be run')
+
+
     difference = MockFile(TEST_FILE1_PATH).compare(MockFile(TEST_FILE2_PATH))
     expected_diff = get_data('../data/binary_expected_diff')
     assert output in difference.comment

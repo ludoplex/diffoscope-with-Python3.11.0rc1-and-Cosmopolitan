@@ -85,8 +85,7 @@ class ApkContainer(Archive):
         return self._members
 
     def extract(self, member_name, dest_dir):
-        src_path = os.path.join(self._unpacked, member_name)
-        return src_path
+        return os.path.join(self._unpacked, member_name)
 
 class ApkFile(File):
     RE_FILE_TYPE = re.compile(r'^(Java|Zip) archive data.*\b')
@@ -105,7 +104,7 @@ def filter_apk_metadata(filepath, archive_name):
     logger.debug("Moving APK metadata from %s to %s", filepath, new_filename)
 
     re_filename = re.compile(
-        r'^apkFileName: %s' % re.escape(os.path.basename(archive_name)),
+        f'^apkFileName: {re.escape(os.path.basename(archive_name))}'
     )
 
     with open(filepath) as in_, open(new_filename, 'w') as out:

@@ -36,15 +36,15 @@ def specialize(file):
         if hasattr(cls, 'recognizes'):
             with profile('recognizes', file):
                 flag = cls.recognizes(file)
-        else:
-            re_tests = [(x, y) for x, y in (
+        elif re_tests := [
+            (x, y)
+            for x, y in (
                 (cls.RE_FILE_TYPE, file.magic_file_type),
                 (cls.RE_FILE_EXTENSION, file.name),
-            ) if x]
-
-            # If neither are defined, it's *not* a match.
-            if re_tests:
-                flag = all(x.search(y) for x, y in re_tests)
+            )
+            if x
+        ]:
+            flag = all(x.search(y) for x, y in re_tests)
 
         if not flag:
             continue

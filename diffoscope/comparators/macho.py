@@ -44,7 +44,7 @@ class Otool(Command):
     def filter(self, line):
         try:
             # Strip the filename itself, it's in the first line on its own, terminated by a colon
-            if line and line.decode('utf-8').strip() == self._path + ':':
+            if line and line.decode('utf-8').strip() == f'{self._path}:':
                 return b""
             return line
         except UnicodeDecodeError:
@@ -80,22 +80,44 @@ class MachoFile(File):
         return lipo_match.group(1).split()
 
     def compare_details(self, other, source=None):
-        differences = []
         # Check for fat binaries, trigger a difference if the architectures differ
         my_archs = MachoFile.get_arch_from_macho(self.path)
         other_archs = MachoFile.get_arch_from_macho(other.path)
 
-        differences.append(Difference.from_text('\n'.join(my_archs),
-                                                '\n'.join(other_archs),
-                                                self.name, other.name, source='architectures'))
-
+        differences = [
+            Difference.from_text(
+                '\n'.join(my_archs),
+                '\n'.join(other_archs),
+                self.name,
+                other.name,
+                source='architectures',
+            )
+        ]
         # Compare common architectures for differences
         for common_arch in set(my_archs) & set(other_archs):
-            differences.append(Difference.from_command(OtoolHeaders, self.path, other.path, command_args=[common_arch],
-                                                       comment="Mach-O headers for architecture %s" % common_arch))
-            differences.append(Difference.from_command(OtoolLibraries, self.path, other.path, command_args=[common_arch],
-                                                       comment="Mach-O load commands for architecture %s" % common_arch))
-            differences.append(Difference.from_command(OtoolDisassemble, self.path, other.path, command_args=[common_arch],
-                                                       comment="Code for architecture %s" % common_arch))
-
+            differences.extend(
+                (
+                    Difference.from_command(
+                        OtoolHeaders,
+                        self.path,
+                        other.path,
+                        command_args=[common_arch],
+                        comment=f"Mach-O headers for architecture {common_arch}",
+                    ),
+                    Difference.from_command(
+                        OtoolLibraries,
+                        self.path,
+                        other.path,
+                        command_args=[common_arch],
+                        comment=f"Mach-O load commands for architecture {common_arch}",
+                    ),
+                    Difference.from_command(
+                        OtoolDisassemble,
+                        self.path,
+                        other.path,
+                        command_args=[common_arch],
+                        comment=f"Code for architecture {common_arch}",
+                    ),
+                )
+            )
         return differences

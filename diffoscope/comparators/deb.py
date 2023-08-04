@@ -47,9 +47,8 @@ def get_build_id_map(container):
             continue
         specialize(member)
         if isinstance(member, DebFile) and member.control:
-            build_ids = member.control.get('Build-Ids', None)
-            if build_ids:
-                d.update({build_id: member for build_id in build_ids.split()})
+            if build_ids := member.control.get('Build-Ids', None):
+                d |= {build_id: member for build_id in build_ids.split()}
     return d
 
 
@@ -85,8 +84,9 @@ class DebFile(File):
     @property
     def md5sums(self):
         if not hasattr(self, '_md5sums'):
-            md5sums_file = self.as_container.control_tar.as_container.lookup_file('./md5sums')
-            if md5sums_file:
+            if md5sums_file := self.as_container.control_tar.as_container.lookup_file(
+                './md5sums'
+            ):
                 self._md5sums = md5sums_file.parse()
             else:
                 logger.debug('Unable to find a md5sums file')
@@ -98,8 +98,9 @@ class DebFile(File):
         if not deb822:
             return None
         if not hasattr(self, '_control'):
-            control_file = self.as_container.control_tar.as_container.lookup_file('./control')
-            if control_file:
+            if control_file := self.as_container.control_tar.as_container.lookup_file(
+                './control'
+            ):
                 with open(control_file.path, 'rb') as f:
                     self._control = deb822.Deb822(f)
         return self._control
@@ -126,9 +127,9 @@ class Md5sumsFile(File):
             with open(self.path, 'r', encoding='utf-8') as f:
                 for line in f:
                     md5sum, path = re.split(r'\s+', line.strip(), maxsplit=1)
-                    md5sums['./%s' % path] = md5sum
+                    md5sums[f'./{path}'] = md5sum
             return md5sums
-        except (UnicodeDecodeError, ValueError):
+        except ValueError:
             logger.debug('Malformed md5sums, ignoring.')
             return {}
 

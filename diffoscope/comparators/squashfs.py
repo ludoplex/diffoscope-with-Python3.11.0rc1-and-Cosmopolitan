@@ -75,10 +75,10 @@ class SquashfsRegularFile(SquashfsMember):
 
     @staticmethod
     def parse(line):
-        m = SquashfsRegularFile.LINE_RE.match(line)
-        if not m:
+        if m := SquashfsRegularFile.LINE_RE.match(line):
+            return m.groupdict()
+        else:
             raise SquashfsInvalidLineFormat("invalid line format")
-        return m.groupdict()
 
     def __init__(self, archive, member_name):
         SquashfsMember.__init__(self, archive, member_name)
@@ -91,10 +91,10 @@ class SquashfsDirectory(Directory, SquashfsMember):
 
     @staticmethod
     def parse(line):
-        m = SquashfsDirectory.LINE_RE.match(line)
-        if not m:
+        if m := SquashfsDirectory.LINE_RE.match(line):
+            return m.groupdict()
+        else:
             raise SquashfsInvalidLineFormat("invalid line format")
-        return m.groupdict()
 
     def __init__(self, archive, member_name):
         SquashfsMember.__init__(self, archive, member_name or '/')
@@ -126,10 +126,10 @@ class SquashfsSymlink(Symlink, SquashfsMember):
 
     @staticmethod
     def parse(line):
-        m = SquashfsSymlink.LINE_RE.match(line)
-        if not m:
+        if m := SquashfsSymlink.LINE_RE.match(line):
+            return m.groupdict()
+        else:
             raise SquashfsInvalidLineFormat("invalid line format")
-        return m.groupdict()
 
     def __init__(self, archive, member_name, destination):
         SquashfsMember.__init__(self, archive, member_name)
@@ -162,15 +162,15 @@ class SquashfsDevice(Device, SquashfsMember):
             d['mode'] = SquashfsDevice.KIND_MAP[d['kind']]
             del d['kind']
         except KeyError:
-            raise SquashfsInvalidLineFormat("unknown device kind %s" % d['kind'])
+            raise SquashfsInvalidLineFormat(f"unknown device kind {d['kind']}")
         try:
             d['major'] = int(d['major'])
         except ValueError:
-            raise SquashfsInvalidLineFormat("unable to parse major number %s" % d['major'])
+            raise SquashfsInvalidLineFormat(f"unable to parse major number {d['major']}")
         try:
             d['minor'] = int(d['minor'])
         except ValueError:
-            raise SquashfsInvalidLineFormat("unable to parse minor number %s" % d['minor'])
+            raise SquashfsInvalidLineFormat(f"unable to parse minor number {d['minor']}")
         return d
 
     def __init__(self, archive, member_name, mode, major, minor):
@@ -233,7 +233,7 @@ class SquashfsContainer(Archive):
         cmd = ['unsquashfs', '-n', '-f', '-d', dest_dir, self.source.path, member_name]
         logger.debug("unsquashfs %s into %s", member_name, dest_dir)
         subprocess.check_call(cmd, shell=False, stdout=subprocess.PIPE)
-        return '%s%s' % (dest_dir, member_name)
+        return f'{dest_dir}{member_name}'
 
     def get_member(self, member_name):
         cls, kwargs = self.archive[member_name]

@@ -22,10 +22,7 @@ def sane(x):
     r = ""
     for i in x:
         j = ord(i)
-        if i not in ['\t', '\n'] and (j < 32):
-            r = r + "."
-        else:
-            r = r + i
+        r = f"{r}." if i not in ['\t', '\n'] and (j < 32) else r + i
     return r
 
 
@@ -39,7 +36,7 @@ def linediff(s, t, diffon, diffoff):
         t = ''.join([ sane(c) for c in t ])
 
     m, n = len(s), len(t)
-    d = [[(0, 0) for i in range(n+1)] for i in range(m+1)]
+    d = [[(0, 0) for _ in range(n+1)] for _ in range(m+1)]
 
 
     d[0][0] = (0, (0, 0))
@@ -50,10 +47,7 @@ def linediff(s, t, diffon, diffoff):
 
     for i in range(m+1)[1:]:
         for j in range(n+1)[1:]:
-            if s[i-1] == t[j-1]:
-                cost = 0
-            else:
-                cost = 1
+            cost = 0 if s[i-1] == t[j-1] else 1
             d[i][j] = min((d[i-1][j][0] + 1, (i-1, j)),
                           (d[i][j-1][0] + 1, (i, j-1)),
                           (d[i-1][j-1][0] + cost, (i-1, j-1)))

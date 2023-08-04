@@ -62,15 +62,15 @@ class Difference(object):
         self._details = []
 
     def __repr__(self):
-        return '<Difference %s -- %s %s>' % (self._source1, self._source2, self._details)
+        return f'<Difference {self._source1} -- {self._source2} {self._details}>'
 
     @staticmethod
     def from_feeder(feeder1, feeder2, path1, path2, source=None, comment=None, **kwargs):
         try:
-            unified_diff = diff(feeder1, feeder2)
-            if not unified_diff:
+            if unified_diff := diff(feeder1, feeder2):
+                return Difference(unified_diff, path1, path2, source, comment, **kwargs)
+            else:
                 return None
-            return Difference(unified_diff, path1, path2, source, comment, **kwargs)
         except RequiredToolNotFound:
             difference = Difference(None, path1, path2, source)
             difference.add_comment('diff is not available!')
@@ -121,10 +121,10 @@ class Difference(object):
         if not difference:
             return None
         if command1 and command1.stderr_content:
-            difference.add_comment('stderr from `%s`:' % ' '.join(command1.cmdline()))
+            difference.add_comment(f"stderr from `{' '.join(command1.cmdline())}`:")
             difference.add_comment(command1.stderr_content)
         if command2 and command2.stderr_content:
-            difference.add_comment('stderr from `%s`:' % ' '.join(command2.cmdline()))
+            difference.add_comment(f"stderr from `{' '.join(command2.cmdline())}`:")
             difference.add_comment(command2.stderr_content)
         return difference
 
@@ -161,7 +161,7 @@ class Difference(object):
         return self._details
 
     def add_details(self, differences):
-        if len([d for d in differences if type(d) is not Difference]) > 0:
+        if [d for d in differences if type(d) is not Difference]:
             raise TypeError("'differences' must contains Difference objects'")
         self._details.extend(differences)
 

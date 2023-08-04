@@ -78,13 +78,12 @@ class PpuFile(File):
                 error = e.output.decode('utf-8', errors='ignore')
                 m = re.search('Expecting PPU version ([0-9]+)', error)
                 try:
-                    PpuFile.ppu_version = m.group(1)
+                    PpuFile.ppu_version = m[1]
                 except AttributeError:
-                    if m is None:
-                        PpuFile.ppu_version = None
-                        logger.debug('Unable to read PPU version')
-                    else:
+                    if m is not None:
                         raise
+                    PpuFile.ppu_version = None
+                    logger.debug('Unable to read PPU version')
             except OSError:
                 PpuFile.ppu_version = None
                 logger.debug('Unable to read PPU version')

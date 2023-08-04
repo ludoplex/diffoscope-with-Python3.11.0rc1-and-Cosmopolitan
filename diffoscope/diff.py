@@ -145,8 +145,7 @@ class DiffParser(object):
 
     def skip_block(self, line):
         if self._remaining_hunk_lines == 0 or line[0] != self._direction:
-            removed = self._block_len - Config().max_diff_block_lines_saved
-            if removed:
+            if removed := self._block_len - Config().max_diff_block_lines_saved:
                 self._diff.write('%s[ %d lines removed ]\n' % (self._direction, removed))
             return self.read_hunk(line)
 
@@ -181,10 +180,7 @@ def run_diff(fifo1, fifo2, end_nl_q1, end_nl_q2):
     if not parser.success and p.returncode not in (0, 1):
         raise subprocess.CalledProcessError(p.returncode, cmd, output=diff)
 
-    if p.returncode == 0:
-        return None
-
-    return parser.diff
+    return None if p.returncode == 0 else parser.diff
 
 class FIFOFeeder(threading.Thread):
     def __init__(self, feeder, fifo_path, end_nl_q=None, *, daemon=True):
@@ -281,9 +277,7 @@ def diff(feeder1, feeder2):
 def reverse_unified_diff(diff):
     res = []
     for line in diff.splitlines(True): # keepends=True
-        found = DiffParser.RANGE_RE.match(line)
-
-        if found:
+        if found := DiffParser.RANGE_RE.match(line):
             before = found.group('start2')
             if found.group('len2') is not None:
                 before += ',' + found.group('len2')
@@ -294,11 +288,9 @@ def reverse_unified_diff(diff):
 
             res.append('@@ -%s +%s @@\n' % (before, after))
         elif line.startswith('-'):
-            res.append('+')
-            res.append(line[1:])
+            res.extend(('+', line[1:]))
         elif line.startswith('+'):
-            res.append('-')
-            res.append(line[1:])
+            res.extend(('-', line[1:]))
         else:
             res.append(line)
     return ''.join(res)

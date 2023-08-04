@@ -45,36 +45,36 @@ class File(object, metaclass=abc.ABCMeta):
 
     if hasattr(magic, 'open'): # use Magic-file-extensions from file
         @classmethod
-        def guess_file_type(self, path):
-            if not hasattr(self, '_mimedb'):
-                self._mimedb = magic.open(magic.NONE)
-                self._mimedb.load()
-            return self._mimedb.file(path)
+        def guess_file_type(cls, path):
+            if not hasattr(cls, '_mimedb'):
+                cls._mimedb = magic.open(magic.NONE)
+                cls._mimedb.load()
+            return cls._mimedb.file(path)
 
         @classmethod
-        def guess_encoding(self, path):
-            if not hasattr(self, '_mimedb_encoding'):
-                self._mimedb_encoding = magic.open(magic.MAGIC_MIME_ENCODING)
-                self._mimedb_encoding.load()
-            return self._mimedb_encoding.file(path)
+        def guess_encoding(cls, path):
+            if not hasattr(cls, '_mimedb_encoding'):
+                cls._mimedb_encoding = magic.open(magic.MAGIC_MIME_ENCODING)
+                cls._mimedb_encoding.load()
+            return cls._mimedb_encoding.file(path)
     else: # use python-magic
         @classmethod
-        def guess_file_type(self, path):
-            if not hasattr(self, '_mimedb'):
-                self._mimedb = magic.Magic()
-            return maybe_decode(self._mimedb.from_file(path))
+        def guess_file_type(cls, path):
+            if not hasattr(cls, '_mimedb'):
+                cls._mimedb = magic.Magic()
+            return maybe_decode(cls._mimedb.from_file(path))
 
         @classmethod
-        def guess_encoding(self, path):
-            if not hasattr(self, '_mimedb_encoding'):
-                self._mimedb_encoding = magic.Magic(mime_encoding=True)
-            return maybe_decode(self._mimedb_encoding.from_file(path))
+        def guess_encoding(cls, path):
+            if not hasattr(cls, '_mimedb_encoding'):
+                cls._mimedb_encoding = magic.Magic(mime_encoding=True)
+            return maybe_decode(cls._mimedb_encoding.from_file(path))
 
     def __init__(self, container=None):
         self._container = container
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__, self.name)
+        return f'<{self.__class__} {self.name}>'
 
     # This should return a path that allows to access the file content
     @property
@@ -133,15 +133,18 @@ class File(object, metaclass=abc.ABCMeta):
 
     @property
     def file_type(self):
-        for x, y in (
-            (self.is_device, "device"),
-            (self.is_symlink, "symlink"),
-            (self.is_directory, "directory"),
-        ):
-            if x():
-                return y
-
-        return "file"
+        return next(
+            (
+                y
+                for x, y in (
+                    (self.is_device, "device"),
+                    (self.is_symlink, "symlink"),
+                    (self.is_directory, "directory"),
+                )
+                if x()
+            ),
+            "file",
+        )
 
     if tlsh:
         @property
@@ -177,8 +180,8 @@ class File(object, metaclass=abc.ABCMeta):
         # Don't attempt to compare directories with any other type as binaries
         if os.path.isdir(self.path) or os.path.isdir(other.path):
             return Difference.from_text(
-                "type: {}".format(self.file_type),
-                "type: {}".format(other.file_type),
+                f"type: {self.file_type}",
+                f"type: {other.file_type}",
                 self.name,
                 other.name,
                 source,
@@ -232,50 +235,47 @@ class File(object, metaclass=abc.ABCMeta):
 
     # To be specialized directly, or by implementing compare_details
     def compare(self, other, source=None):
-        if hasattr(self, 'compare_details') or self.as_container:
-            try:
-                difference = self._compare_using_details(other, source)
+        if not hasattr(self, 'compare_details') and not self.as_container:
+            return self.compare_bytes(other, source)
+        try:
+            difference = self._compare_using_details(other, source)
                 # no differences detected inside? let's at least do a binary diff
-                if difference is None:
-                    difference = self.compare_bytes(other, source=source)
-                    if difference is None:
-                        return None
-                    difference.add_comment(
-                        "No file format specific differences found inside, "
-                        "yet data differs ({})".format(self.magic_file_type),
-                    )
-            except subprocess.CalledProcessError as e:
-                difference = self.compare_bytes(other, source=source)
-                if e.output:
-                    output = re.sub(r'^', '    ', e.output.decode('utf-8', errors='replace'), flags=re.MULTILINE)
-                else:
-                    output = '<none>'
-                cmd = ' '.join(e.cmd)
-                if difference is None:
-                    return None
-                difference.add_comment("Command `%s` exited with %d. Output:\n%s"
-                                       % (cmd, e.returncode, output))
-            except RequiredToolNotFound as e:
+            if difference is None:
                 difference = self.compare_bytes(other, source=source)
                 if difference is None:
                     return None
                 difference.add_comment(
-                    "'%s' not available in path. Falling back to binary comparison." % e.command)
-                package = e.get_package()
-                if package:
-                    difference.add_comment("Install '%s' to get a better output." % package)
-            except OutputParsingError as e:
-                difference = self.compare_bytes(other, source=source)
-                if difference is None:
-                    return None
-                difference.add_comment("Error parsing output of `%s` for %s" %
-                        (e.command, e.object_class))
-            return difference
-        return self.compare_bytes(other, source)
+                    f"No file format specific differences found inside, yet data differs ({self.magic_file_type})"
+                )
+        except subprocess.CalledProcessError as e:
+            difference = self.compare_bytes(other, source=source)
+            if e.output:
+                output = re.sub(r'^', '    ', e.output.decode('utf-8', errors='replace'), flags=re.MULTILINE)
+            else:
+                output = '<none>'
+            cmd = ' '.join(e.cmd)
+            if difference is None:
+                return None
+            difference.add_comment("Command `%s` exited with %d. Output:\n%s"
+                                   % (cmd, e.returncode, output))
+        except RequiredToolNotFound as e:
+            difference = self.compare_bytes(other, source=source)
+            if difference is None:
+                return None
+            difference.add_comment(
+                f"'{e.command}' not available in path. Falling back to binary comparison."
+            )
+            if package := e.get_package():
+                difference.add_comment(f"Install '{package}' to get a better output.")
+        except OutputParsingError as e:
+            difference = self.compare_bytes(other, source=source)
+            if difference is None:
+                return None
+            difference.add_comment(
+                f"Error parsing output of `{e.command}` for {e.object_class}"
+            )
+        return difference
 
 # helper function to convert to bytes if necessary
 def maybe_decode(s):
-    if type(s) is bytes:
-        return s.decode('utf-8')
-    else:
-        return s
+    return s.decode('utf-8') if type(s) is bytes else s

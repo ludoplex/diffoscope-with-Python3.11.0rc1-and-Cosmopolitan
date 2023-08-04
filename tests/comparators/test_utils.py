@@ -92,12 +92,17 @@ def test_no_fuzzy_matching_new_file(monkeypatch, fuzzy_tar_in_tar1, fuzzy_tar_in
 
 @skip_unless_tools_exist('tee')
 def test_trim_stderr_in_command():
+
+
+
     class FillStderr(Command):
         def cmdline(self):
             return ['tee', '/dev/stderr']
 
         def feed_stdin(self, stdin):
-            for dummy in range(0, Command.MAX_STDERR_LINES + 1):
-                stdin.write('error {}\n'.format(self.path).encode('utf-8'))
+            for _ in range(0, Command.MAX_STDERR_LINES + 1):
+                stdin.write(f'error {self.path}\n'.encode('utf-8'))
+
+
     difference = Difference.from_command(FillStderr, 'dummy1', 'dummy2')
     assert '[ 1 lines ignored ]' in difference.comment

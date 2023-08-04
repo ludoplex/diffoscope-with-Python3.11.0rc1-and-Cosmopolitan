@@ -44,7 +44,9 @@ def rom1(tmpdir):
 def rom2(tmpdir):
     path = str(tmpdir.join('coreboot2.rom'))
     size = 32768
-    subprocess.check_call(['cbfstool', path, 'create', '-m', 'x86', '-s', '%s' % size], shell=False)
+    subprocess.check_call(
+        ['cbfstool', path, 'create', '-m', 'x86', '-s', f'{size}'], shell=False
+    )
     subprocess.check_call(['cbfstool', path, 'add', '-f', TEST_FILE2_PATH, '-n', 'text', '-t', 'raw'], shell=False)
     # Remove the last 4 bytes to exercice the full header search
     buf = bytearray(size)

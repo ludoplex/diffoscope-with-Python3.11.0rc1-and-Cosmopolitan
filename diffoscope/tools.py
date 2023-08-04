@@ -61,8 +61,4 @@ def tool_required(command):
 
 def get_current_os():
     system = platform.system()
-    if system == "Linux":
-        # FIXME: Will break under Python 3.7, see:
-        # https://docs.python.org/3/library/platform.html#platform.linux_distribution
-        return platform.linux_distribution()[0]
-    return system  # noqa
+    return platform.linux_distribution()[0] if system == "Linux" else system

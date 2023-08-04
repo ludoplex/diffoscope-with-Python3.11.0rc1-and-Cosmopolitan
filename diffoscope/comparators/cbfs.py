@@ -91,10 +91,12 @@ CBFS_MAXIMUM_FILE_SIZE = 24 * 2 ** 20 # 24 MiB
 
 def is_header_valid(buf, size, offset=0):
     magic, version, romsize, bootblocksize, align, cbfs_offset, architecture, pad = struct.unpack_from('!IIIIIIII', buf, offset)
-    return magic == CBFS_HEADER_MAGIC and \
-           (version == CBFS_HEADER_VERSION1 or version == CBFS_HEADER_VERSION2) and \
-           (romsize <= size) and \
-           (cbfs_offset < romsize)
+    return (
+        magic == CBFS_HEADER_MAGIC
+        and version in [CBFS_HEADER_VERSION1, CBFS_HEADER_VERSION2]
+        and romsize <= size
+        and cbfs_offset < romsize
+    )
 
 
 class CbfsFile(File):

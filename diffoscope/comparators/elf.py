@@ -143,9 +143,7 @@ class RedaelfVersionInfo(Readelf):
 
 class ReadelfDebugDump(Readelf):
     def __new__(cls, *args, **kwargs):
-        # Find the section group from the class name
-        debug_section_group = cls.__name__[len('ReadelfDebugDump_'):]
-        if debug_section_group:
+        if debug_section_group := cls.__name__[len('ReadelfDebugDump_') :]:
             return ReadelfDebugDump(debug_section_group, *args, **kwargs)
         return super(Readelf, cls).__new__(cls)
 
@@ -154,11 +152,11 @@ class ReadelfDebugDump(Readelf):
         super().__init__(*args, **kwargs)
 
     def readelf_options(self):
-        return ['--debug-dump=%s' % self._debug_section_group]
+        return [f'--debug-dump={self._debug_section_group}']
 
 
 READELF_DEBUG_DUMP_COMMANDS = [
-    type('ReadelfDebugDump_{}'.format(x), (ReadelfDebugDump,), {})
+    type(f'ReadelfDebugDump_{x}', (ReadelfDebugDump,), {})
     for x in DEBUG_SECTION_GROUPS
 ]
 
@@ -189,11 +187,11 @@ class ReadElfSection(Readelf):
         return self._section_name
 
     def readelf_options(self):
-        return ReadElfSection.base_options() + ['--hex-dump={}'.format(self.section_name)]
+        return ReadElfSection.base_options() + [f'--hex-dump={self.section_name}']
 
 class ReadelfStringSection(ReadElfSection):
     def readelf_options(self):
-        return ReadElfSection.base_options() + ['--string-dump={}'.format(self.section_name)]
+        return ReadElfSection.base_options() + [f'--string-dump={self.section_name}']
 
 class ObjdumpSection(Command):
     def __init__(self, path, section_name, *args, **kwargs):
@@ -207,21 +205,19 @@ class ObjdumpSection(Command):
 
     @tool_required('objdump')
     def cmdline(self):
-        return [
-            'objdump',
-        ] + self.objdump_options() + [
-            '--section={}'.format(self._section_name),
-            self.path,
-        ]
+        return (
+            [
+                'objdump',
+            ]
+            + self.objdump_options()
+            + [f'--section={self._section_name}', self.path]
+        )
 
     def filter(self, line):
         # Remove the filename from the output
         if line.startswith(self._path_bin + b':'):
             return b''
-        if line.startswith(b'In archive'):
-            return b''
-
-        return line
+        return b'' if line.startswith(b'In archive') else line
 
 class ObjdumpDisassembleSection(ObjdumpSection):
     RE_SYMBOL_COMMENT = re.compile(rb'^( +[0-9a-f]+:[^#]+)# [0-9a-f]+ <[^>]+>$')
@@ -279,10 +275,7 @@ class ElfSection(File):
 
     @property
     def progress_name(self):
-        return "{} [{}]".format(
-            self.container.source.progress_name,
-            super().progress_name,
-        )
+        return f"{self.container.source.progress_name} [{super().progress_name}]"
 
     @property
     def path(self):
@@ -352,10 +345,7 @@ def get_build_id(path):
         return None
 
     m = re.search(r'^\s+Build ID: ([0-9a-f]+)$', output.decode('utf-8'), flags=re.MULTILINE)
-    if not m:
-        return None
-
-    return m.group(1)
+    return None if not m else m[1]
 
 
 @tool_required('readelf')
@@ -370,10 +360,7 @@ def get_debug_link(path):
         return None
 
     m = re.search(r'^\s+\[\s+0\]\s+(\S+)$', output.decode('utf-8', errors='replace'), flags=re.MULTILINE)
-    if not m:
-        return None
-
-    return m.group(1)
+    return None if not m else m[1]
 
 
 class ElfContainer(Container):
@@ -407,7 +394,7 @@ class ElfContainer(Container):
 
                 # Strip number column because there may be spaces in the brakets
                 line = line.split(']', 1)[1].split()
-                name, type, flags = line[0], line[1], line[6] + '_'
+                name, type, flags = line[0], line[1], f'{line[6]}_'
 
                 if name.startswith('.debug') or name.startswith('.zdebug'):
                     has_debug_symbols = True
@@ -464,7 +451,7 @@ class ElfContainer(Container):
         if not hasattr(deb.container, 'dbgsym_build_id_map'):
             deb.container.dbgsym_build_id_map = get_build_id_map(deb.container)
 
-        if not build_id in deb.container.dbgsym_build_id_map:
+        if build_id not in deb.container.dbgsym_build_id_map:
             logger.debug('Unable to find a matching debug package for Build Id %s', build_id)
             return
 

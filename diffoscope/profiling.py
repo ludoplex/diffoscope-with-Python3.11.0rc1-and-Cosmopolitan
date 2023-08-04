@@ -53,10 +53,7 @@ class ProfileManager(object):
 
     def increment(self, start, namespace, key):
         if not isinstance(key, str):
-            key = '{}.{}'.format(
-                key.__class__.__module__,
-                key.__class__.__name__,
-            )
+            key = f'{key.__class__.__module__}.{key.__class__.__name__}'
 
         self.data[namespace][key]['time'] += time.time() - start
         self.data[namespace][key]['count'] += 1
@@ -71,7 +68,7 @@ class ProfileManager(object):
             self.output(fn)
 
     def output(self, print):
-        title = "Profiling output for: {}".format(' '.join(sys.argv))
+        title = f"Profiling output for: {' '.join(sys.argv)}"
 
         print(title)
         print("=" * len(title))
@@ -82,7 +79,7 @@ class ProfileManager(object):
                 sum(x['time'] for x in keys.values()),
             )
 
-            print("\n{}\n{}\n".format(subtitle, "-" * len(subtitle)))
+            print(f'\n{subtitle}\n{"-" * len(subtitle)}\n')
 
             for value, totals in sorted(keys.items(), key=lambda x: x[1]['time'], reverse=True):
                 print("  {:10.3f}s {:5d} call{}    {}".format(

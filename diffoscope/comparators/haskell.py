@@ -105,12 +105,6 @@ class HiFile(File):
                 )
                 return False
 
-            # Skip some old descriptor thingy that has varying size
-            if buf == HI_MAGIC_32:
-                fp.read(4)
-            elif buf == HI_MAGIC_64:
-                fp.read(8)
-
             # Read version, which is [Char]
             buf = fp.read(1)
 

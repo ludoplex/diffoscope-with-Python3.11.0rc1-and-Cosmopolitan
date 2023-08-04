@@ -222,16 +222,10 @@ class Changes(object):
         ``section``
         Section name to parse.
         """
-        if '/' in section:
-            return section.split('/')
-        else:
-            return ['main', section]
+        return section.split('/') if '/' in section else ['main', section]
 
     def set_directory(self, directory):
-        if directory:
-            self._directory = directory
-        else:
-            self._directory = ""
+        self._directory = directory if directory else ""
 
     def validate(self, check_hash="sha1", check_signature=True):
         """
@@ -326,19 +320,16 @@ class Changes(object):
 
             with open(os.path.join(self._directory, filename), "rb") as fc:
                 while True:
-                    chunk = fc.read(131072)
-                    if not chunk:
+                    if chunk := fc.read(131072):
+                        hash_type.update(chunk)
+                    else:
                         break
-                    hash_type.update(chunk)
             fc.close()
 
-            if not hash_type.hexdigest() == changed_files[field_name]:
+            if hash_type.hexdigest() != changed_files[field_name]:
                 raise ChangesFileException(
-                    "Checksum mismatch for file %s: %s != %s" % (
-                        filename,
-                        hash_type.hexdigest(),
-                        changed_files[field_name]
-                    ))
+                    f"Checksum mismatch for file {filename}: {hash_type.hexdigest()} != {changed_files[field_name]}"
+                )
             else:
                 logger.debug("%s Checksum for file %s matches",
                     field_name, filename)

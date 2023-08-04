@@ -104,16 +104,15 @@ class ProgressBar(object):
 
         self.msg = ""
 
+
+
         class Message(progressbar.Widget):
             def update(self, pbar, _observer=self):
                 msg = _observer.msg
                 width = 25
 
-                if len(msg) <= width:
-                    return msg.rjust(width)
+                return msg.rjust(width) if len(msg) <= width else f'…{msg[-width + 1:]}'
 
-                # Print the last `width` characters with an ellipsis.
-                return '…{}'.format(msg[-width + 1:])
 
         class OurProgressBar(progressbar.ProgressBar):
             def _need_update(self):

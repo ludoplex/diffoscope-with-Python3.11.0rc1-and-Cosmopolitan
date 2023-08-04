@@ -49,7 +49,7 @@ class Presenter(object):
         #
         # We don't use textwrap.indent as that unnecessarily calls
         # str.splitlines, etc.
-        return prefix + val.rstrip().replace('\n', '\n{}'.format(prefix))
+        return prefix + val.rstrip().replace('\n', f'\n{prefix}')
 
 class PrintLimitReached(Exception):
     pass

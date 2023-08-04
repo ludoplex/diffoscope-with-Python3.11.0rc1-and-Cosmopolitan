@@ -29,10 +29,7 @@ class MarkdownTextPresenter(Presenter):
         if difference.source1 == difference.source2:
             self.title(difference.source1)
         else:
-            self.title("Comparing {} & {}".format(
-                difference.source1,
-                difference.source2,
-            ))
+            self.title(f"Comparing {difference.source1} & {difference.source2}")
 
         for x in difference.comments:
             self.print_func(x)
@@ -45,5 +42,5 @@ class MarkdownTextPresenter(Presenter):
     def title(self, val):
         prefix = '#' * min(self.depth + 1, 6)
 
-        self.print_func("{} {}".format(prefix, val))
+        self.print_func(f"{prefix} {val}")
         self.print_func()

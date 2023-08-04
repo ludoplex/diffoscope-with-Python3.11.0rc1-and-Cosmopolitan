@@ -44,8 +44,9 @@ class ArContainer(LibarchiveContainer):
             "/" : "this is the symbol table, already accounted for in other output",
             "//" : "this is the table for GNU long names, already accounted for in the archive filelist",
         }
-        filtered_out = cls([p for p in members.items() if p[0] in known_ignores])
-        if filtered_out:
+        if filtered_out := cls(
+            [p for p in members.items() if p[0] in known_ignores]
+        ):
             for k, v in filtered_out.items():
                 logger.debug("ignored ar member '%s' because %s", k, known_ignores[k])
         return cls([p for p in members.items() if p[0] not in known_ignores])

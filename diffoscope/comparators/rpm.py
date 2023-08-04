@@ -66,7 +66,7 @@ def get_rpm_header(path, ts):
         for rpmtag in sorted(rpm.tagnames):
             if rpmtag not in hdr:
                 continue
-            s.write(u"%s: " % rpm.tagnames[rpmtag])
+            s.write(f"{rpm.tagnames[rpmtag]}: ")
             convert_header_field(s, hdr[rpmtag])
             s.write(u"\n")
     return s.getvalue()

@@ -99,7 +99,11 @@ class Command(object, metaclass=abc.ABCMeta):
             if self._stderr_line_count <= Command.MAX_STDERR_LINES:
                 self._stderr.write(line)
         if self._stderr_line_count > Command.MAX_STDERR_LINES:
-            self._stderr.write('[ {} lines ignored ]\n'.format(self._stderr_line_count - Command.MAX_STDERR_LINES).encode('utf-8'))
+            self._stderr.write(
+                f'[ {self._stderr_line_count - Command.MAX_STDERR_LINES} lines ignored ]\n'.encode(
+                    'utf-8'
+                )
+            )
         self._process.stderr.close()
 
     @property

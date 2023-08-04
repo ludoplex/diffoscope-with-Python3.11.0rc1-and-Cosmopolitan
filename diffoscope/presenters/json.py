@@ -36,12 +36,14 @@ class JSONPresenter(Presenter):
         self.print_func(json.dumps(self.root[0], indent=2, sort_keys=True))
 
     def visit_difference(self, difference):
-        self.current.append({
-            'source1': difference.source1,
-            'source2': difference.source2,
-            'comments': [x for x in difference.comments],
-            'differences': [],
-            'unified_diff': difference.unified_diff,
-        })
+        self.current.append(
+            {
+                'source1': difference.source1,
+                'source2': difference.source2,
+                'comments': list(difference.comments),
+                'differences': [],
+                'unified_diff': difference.unified_diff,
+            }
+        )
 
         self.current = self.current[-1]['differences']

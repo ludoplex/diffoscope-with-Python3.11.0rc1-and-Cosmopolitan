@@ -37,7 +37,7 @@ class MissingFile(File):
     @staticmethod
     def recognizes(file):
         if isinstance(file, FilesystemFile) and not os.path.lexists(file.name):
-            assert Config().new_file, '%s does not exist' % file.name
+            assert Config().new_file, f'{file.name} does not exist'
             return True
         return False
 
@@ -85,10 +85,7 @@ class MissingFile(File):
         logger.debug("Performing backward comparison")
         backward_diff = other.compare(self, source)
 
-        if not backward_diff:
-            return None
-
-        return backward_diff.get_reverse()
+        return None if not backward_diff else backward_diff.get_reverse()
 
     # Be nice to text comparisons
     @property

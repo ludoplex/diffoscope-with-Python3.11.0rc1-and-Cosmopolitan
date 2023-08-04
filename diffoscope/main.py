@@ -177,9 +177,12 @@ def create_parser():
     group4 = parser.add_argument_group('information commands')
     group4.add_argument('--help', '-h', action='help',
                         help="Show this help and exit")
-    group4.add_argument('--version', action='version',
-                        version='diffoscope %s' % VERSION,
-                        help="Show program's version number and exit")
+    group4.add_argument(
+        '--version',
+        action='version',
+        version=f'diffoscope {VERSION}',
+        help="Show program's version number and exit",
+    )
     group4.add_argument('--list-tools', nargs='?', type=str, action=ListToolsAction,
                         metavar='DISTRO', choices=OS_NAMES,
                         help='Show external tools required and exit. '
@@ -219,7 +222,7 @@ class ListToolsAction(argparse.Action):
             current_os = get_current_os()
             os_list = [current_os] if (current_os in OS_NAMES) else iter(OS_NAMES)
         for os in os_list:
-            print("Available-in-{}-packages: ".format(OS_NAMES[os]), end='')
+            print(f"Available-in-{OS_NAMES[os]}-packages: ", end='')
             print(', '.join(sorted(filter(None, {
                 EXTERNAL_TOOLS.get(k, {}).get(os, None)
                 for k in tool_required.all
@@ -261,7 +264,7 @@ def run_diffoscope(parsed_args):
                 parsed_args.path1, parsed_args.path2)
     ProgressManager().finish()
     # Generate an empty, dummy diff to write, saving the exit code first.
-    has_differences = bool(difference is not None)
+    has_differences = difference is not None
     if difference is None and parsed_args.output_empty:
         difference = Difference(None, parsed_args.path1, parsed_args.path2)
     with profile('main', 'outputs'):

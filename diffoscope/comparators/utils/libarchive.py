@@ -82,11 +82,19 @@ def list_libarchive(path):
             else:
                 name_and_link = entry.name
             if entry.uname:
-                user = '{user:<8} {uid:>7}'.format(user=entry.uname.decode('utf-8', errors='surrogateescape'), uid='({})'.format(entry.uid))
+                user = '{user:<8} {uid:>7}'.format(
+                    user=entry.uname.decode('utf-8', errors='surrogateescape'),
+                    uid=f'({entry.uid})',
+                )
             else:
                 user = entry.uid
             if entry.gname:
-                group = '{group:<8} {gid:>7}'.format(group=entry.gname.decode('utf-8', errors='surrogateescape'), gid='({})'.format(entry.gid))
+                group = '{group:<8} {gid:>7}'.format(
+                    group=entry.gname.decode(
+                        'utf-8', errors='surrogateescape'
+                    ),
+                    gid=f'({entry.gid})',
+                )
             else:
                 group = entry.gid
             yield '{strmode} {entry.nlink:>3} {user:>8} {group:>8} {size_or_dev:>8} {mtime:>8} {name_and_link}\n'.format(strmode=entry.strmode.decode('us-ascii'), entry=entry, user=user, group=group, size_or_dev=size_or_dev, mtime=mtime, name_and_link=name_and_link)

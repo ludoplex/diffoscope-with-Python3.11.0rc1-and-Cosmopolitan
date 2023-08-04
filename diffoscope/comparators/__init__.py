@@ -95,17 +95,13 @@ class ComparatorManager(object):
                 package, klass_name = x.rsplit('.', 1)
 
                 try:
-                    mod = importlib.import_module(
-                        'diffoscope.comparators.{}'.format(package)
-                    )
+                    mod = importlib.import_module(f'diffoscope.comparators.{package}')
                 except ImportError:
                     continue
 
                 self.classes.append(getattr(mod, klass_name))
                 break
             else:  # noqa
-                raise ImportError(
-                    "Could not import any of {}".format(', '.join(xs))
-                )
+                raise ImportError(f"Could not import any of {', '.join(xs)}")
 
         logger.debug("Loaded %d comparator classes", len(self.classes))

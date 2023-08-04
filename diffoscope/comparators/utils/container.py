@@ -77,10 +77,7 @@ class Container(object, metaclass=abc.ABCMeta):
             return file
 
         container = file.as_container
-        if not container:
-            return None
-
-        return container.lookup_file(*remainings)
+        return None if not container else container.lookup_file(*remainings)
 
     @abc.abstractmethod
     def get_member_names(self):

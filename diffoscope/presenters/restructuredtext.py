@@ -31,10 +31,7 @@ class RestructuredTextPresenter(Presenter):
         if difference.source1 == difference.source2:
             self.title(difference.source1)
         else:
-            self.title("Comparing {} & {}".format(
-                difference.source1,
-                difference.source2,
-            ))
+            self.title(f"Comparing {difference.source1} & {difference.source2}")
 
         for x in difference.comments:
             self.print_func()

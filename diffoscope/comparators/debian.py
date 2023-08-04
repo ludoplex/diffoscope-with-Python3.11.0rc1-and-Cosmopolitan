@@ -80,10 +80,7 @@ class DebControlContainer(Container):
         if '-' in version:
             upstream, revision = version.rsplit('-', 1)
 
-            return re.compile(r'_%s(?:-%s)?' % (
-                re.escape(upstream),
-                re.escape(revision),
-            ))
+            return re.compile(f'_{re.escape(upstream)}(?:-{re.escape(revision)})?')
 
         return re.compile(re.escape(version))
 
@@ -266,7 +263,7 @@ class DotBuildinfoFile(DebControlFile):
             # We can parse .buildinfo files just like .dsc
             buildinfo = Dsc(f)
 
-        if not 'Checksums-Sha256' in buildinfo:
+        if 'Checksums-Sha256' not in buildinfo:
             return False
 
         for d in buildinfo.get('Checksums-Sha256'):

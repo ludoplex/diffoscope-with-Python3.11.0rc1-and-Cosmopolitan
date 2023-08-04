@@ -161,10 +161,13 @@ class FilesystemDirectory(object):
 
         differences = []
         try:
-            listing_diff = Difference.from_text('\n'.join(list_files(self.path)),
-                                                '\n'.join(list_files(other.path)),
-                                                self.path, other.path, source='file list')
-            if listing_diff:
+            if listing_diff := Difference.from_text(
+                '\n'.join(list_files(self.path)),
+                '\n'.join(list_files(other.path)),
+                self.path,
+                other.path,
+                source='file list',
+            ):
                 differences.append(listing_diff)
         except RequiredToolNotFound:
             logger.info("Unable to find 'getfacl'.")

@@ -40,9 +40,7 @@ class Zipinfo(Command):
 
     def filter(self, line):
         # we don't care about the archive file path
-        if line.startswith(b'Archive:'):
-            return b''
-        return line
+        return b'' if line.startswith(b'Archive:') else line
 
 
 class ZipinfoVerbose(Zipinfo):

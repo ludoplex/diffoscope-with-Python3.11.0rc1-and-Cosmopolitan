@@ -68,8 +68,7 @@ class Iso9660File(File):
     RE_FILE_TYPE = re.compile(r'\bISO 9660\b')
 
     def compare_details(self, other, source=None):
-        differences = []
-        differences.append(Difference.from_command(ISO9660PVD, self.path, other.path))
+        differences = [Difference.from_command(ISO9660PVD, self.path, other.path)]
         differences.append(Difference.from_command(ISO9660Listing, self.path, other.path))
         for extension in ('joliet', 'rockridge'):
             try:

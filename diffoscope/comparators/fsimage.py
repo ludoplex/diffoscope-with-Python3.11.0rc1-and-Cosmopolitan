@@ -63,7 +63,7 @@ class FsImageContainer(Archive):
         return collections.OrderedDict({'fsimage-content': self.get_member(self.get_member_names()[0])})
 
     def get_member_names(self):
-        return [os.path.basename(self.source.path) + '.tar']
+        return [f'{os.path.basename(self.source.path)}.tar']
 
     def extract(self, member_name, dest_dir):
         dest_path = os.path.join(dest_dir, member_name)
@@ -78,12 +78,8 @@ class FsImageFile(File):
 
     def compare_details(self, other, source=None):
         differences = []
-        my_fs = ''
-        other_fs = ''
-        if hasattr(self.as_container, 'fs'):
-            my_fs = self.as_container.fs
-        if hasattr(other.as_container, 'fs'):
-            other_fs = other.as_container.fs
+        my_fs = self.as_container.fs if hasattr(self.as_container, 'fs') else ''
+        other_fs = other.as_container.fs if hasattr(other.as_container, 'fs') else ''
         if my_fs != other_fs:
             differences.append(Difference.from_text(my_fs, other_fs, None, None, source="filesystem"))
 

@@ -46,20 +46,18 @@ class TextPresenter(Presenter):
 
     def visit_difference(self, difference):
         if self.depth == 0:
-            self.output("--- {}".format(difference.source1))
-            self.output("+++ {}".format(difference.source2))
+            self.output(f"--- {difference.source1}")
+            self.output(f"+++ {difference.source2}")
         elif difference.source1 == difference.source2:
-            self.output(u"├── {}".format(difference.source1))
+            self.output(f"├── {difference.source1}")
         else:
-            self.output(u"│   --- {}".format(difference.source1))
-            self.output(u"├── +++ {}".format(difference.source2))
+            self.output(f"│   --- {difference.source1}")
+            self.output(f"├── +++ {difference.source2}")
 
         for x in difference.comments:
-            self.output(u"│┄ {}".format(x))
+            self.output(f"│┄ {x}")
 
-        diff = difference.unified_diff
-
-        if diff:
+        if diff := difference.unified_diff:
             self.output(color_unified_diff(diff) if self.color else diff, True)
 
     def output(self, val, raw=False):
